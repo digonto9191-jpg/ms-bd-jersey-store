@@ -1,0 +1,99 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Product {
+  id        Int     @id @default(autoincrement())
+  name      String
+  slug      String  @unique
+  team      String
+  teamSlug  String
+  category  String  // "club" or "national"
+  season    String
+  description String
+  price     Float
+  stock     Int
+  image     String
+  sizes     String  // JSON array stored as string: ["XS", "S", "M", "L", "XL", "XXL"]
+  colors    String  // JSON array stored as string: ["Home", "Away", "Third"]
+  featured  Boolean @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  orderItems OrderItem[]
+
+  @@index([teamSlug])
+  @@index([category])
+  @@index([featured])
+}
+
+model Team {
+  id        Int     @id @default(autoincrement())
+  name      String
+  slug      String  @unique
+  category  String  // "club" or "national"
+  country   String?
+  description String
+  logo      String
+  createdAt DateTime @default(now())
+
+  @@index([category])
+}
+
+model Order {
+  id            Int      @id @default(autoincrement())
+  customerName  String
+  phone         String
+  email         String
+  address       String
+  city          String
+  postalCode    String
+  paymentMethod String  // "cash" or "online"
+  status        String  @default("pending") // "pending", "confirmed", "processing", "shipped", "delivered", "cancelled"
+  totalAmount   Float
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  orderItems OrderItem[]
+
+  @@index([status])
+  @@index([email])
+}
+
+model OrderItem {
+  id          Int     @id @default(autoincrement())
+  orderId     Int
+  productId   Int
+  productName String
+  size        String
+  quantity    Int
+  price       Float
+  subtotal    Float
+
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
+
+  @@index([orderId])
+  @@index([productId])
+}
+
+model ContactMessage {
+  id        Int     @id @default(autoincrement())
+  name      String
+  email     String
+  subject   String
+  message   String
+  status    String  @default("new") // "new", "read", "replied"
+  createdAt DateTime @default(now())
+
+  @@index([status])
+  @@index([email])
+}
